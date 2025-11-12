@@ -49,24 +49,30 @@ const useGraph = create<Graph & GraphActions>((set, get) => ({
   ...initialStates,
   clearGraph: () => set({ nodes: [], edges: [], loading: false }),
   setSelectedNode: nodeData => set({ selectedNode: nodeData }),
-  setGraph: (data, options) => {
-    const { nodes, edges } = parser(data ?? useJson.getState().json);
+ setGraph: (data, options) => {
+  const { nodes, edges } = parser(data ?? useJson.getState().json);
 
-    if (nodes.length > SUPPORTED_LIMIT) {
-      return set({
-        aboveSupportedLimit: true,
-        ...options,
-        loading: false,
-      });
-    }
-
-    set({
-      nodes,
-      edges,
-      aboveSupportedLimit: false,
+  if (nodes.length > SUPPORTED_LIMIT) {
+    return set({
+      aboveSupportedLimit: true,
       ...options,
+      loading: false,
     });
-  },
+  }
+
+  const prevSelected = get().selectedNode;
+  const nextSelected =
+    prevSelected ? nodes.find(n => n.id === prevSelected.id) ?? null : null;
+
+  set({
+    nodes,
+    edges,
+    selectedNode: nextSelected,
+    aboveSupportedLimit: false,
+    loading: false,
+    ...options,
+  });
+},
   setDirection: (direction = "RIGHT") => {
     set({ direction });
     setTimeout(() => get().centerView(), 200);
